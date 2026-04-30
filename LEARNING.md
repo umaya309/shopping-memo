@@ -82,7 +82,141 @@ main（メイン線路）
 
 ### 次のステップ（予定）
 
-- [ ] GitHub にプッシュ（feature ブランチを remote に送る）
-- [ ] Pull Request の概念を学ぶ
-- [ ] feature ブランチを main にマージ
+- [x] GitHub にプッシュ（feature ブランチを remote に送る）
+- [x] Pull Request の概念を学ぶ
+- [x] feature ブランチを main にマージ
 - [ ] 次の feature ブランチ（常備品プリセット機能）を切ってから実装開始
+
+---
+
+## Session 2: GitHub との連携と Pull Request ワークフロー
+
+### 学習した概念
+
+#### 1. Remote（リモート）とは
+- **定義**: GitHub 上のリポジトリのこと
+- **Origin**: デフォルトの遠隔リポジトリ（GitHub）
+- **構造**:
+  ```
+  Local（あなたのパソコン）
+      ↑↓
+  GitHub（origin）
+  ```
+- **確認コマンド**: `git remote -v` で接続情報を表示
+
+#### 2. Fetch と Push
+- **Fetch**: `GitHub → Local`（データを引っ張ってくる）
+- **Push**: `Local → GitHub`（データを送る）
+- **origin の設定**: 両方の役割を持つ
+  - Push 先：ローカルのコミットを送る
+  - Fetch 元：他人の変更や新しい branch を取得
+
+#### 3. Tracking（追跡設定）
+- **定義**: ローカルの branch が GitHub のどの branch に対応するかを記憶
+- **`-u` フラグの役割**: push 時に追跡設定を同時に作成
+- **効果**:
+  - `-u` でセット → `git push` だけで自動的に対応する branch に送信
+  - なし → 毎回 `git push origin branch-name` と明示的に指定
+
+#### 4. Branch 名の統一
+- **ルール**: ローカルと GitHub は同じブランチ名で統一
+- **理由**: 違う名前だと混乱のもと（同じコミットなのに別 branch）
+- **慣例**: 自動的に同じ名前で push される
+
+#### 5. Pull Request（PR）
+- **定義**: 「この branch の変更を main にマージしていいですか？」という提案・確認プロセス
+- **利点**:
+  - 変更内容をレビュー（1人でも自分が確認）
+  - コミット履歴が見やすい
+  - チーム開発の習慣づけ
+- **流れ**:
+  ```
+  feature branch → GitHub push
+               → PR 作成
+               → 内容確認
+               → マージ
+               → branch 削除
+  ```
+
+#### 6. Conflict（競合）
+- **定義**: 複数人が同じファイルの同じ行を修正したとき発生
+- **例**:
+  ```
+  main:      line 5 = "aaa"
+  feature:   line 5 = "bbb"
+             → どっちを採用する？
+  ```
+- **このプロジェクトでは**: Conflict なし（新規ファイルだけ追加）
+
+#### 7. Branch の削除
+- **安全性**: Branch を削除しても **commit 履歴は消えない**
+- **理由**: Branch はポインタに過ぎず、実データは `.git/` に永遠に保存
+- **確認方法**: `git log` で commit 履歴は残ってる
+- **GitHub 履歴**: PR タブで merge 履歴は残る
+
+#### 8. Remote-Tracking Branch（リモート追跡 branch）
+- **定義**: ローカルキャッシュ内の、GitHub branch の状態
+- **表示**: `origin/feature/init-structure` という形式
+- **削除方法**: GitHub から削除しても、ローカルキャッシュには残ることがある
+  ```
+  git fetch --prune   ← GitHub から削除された branch をローカルからも削除
+  ```
+
+#### 9. Fetch vs Pull
+- **Fetch**: GitHub からの取得のみ
+  ```
+  GitHub → origin/main（ローカルキャッシュ）
+  自分の main には反映されない
+  ```
+- **Pull**: Fetch + 自動 Merge
+  ```
+  GitHub → origin/main → 自動的に main にマージ
+  ```
+- **使い分け**:
+  - Fetch = 「GitHub に何があるか確認したい（merge は後で）」
+  - Pull = 「GitHub の最新を今すぐ反映したい」
+
+### 実行したコマンド
+
+| コマンド | 説明 |
+|---------|------|
+| `git remote -v` | リモート接続情報を表示 |
+| `git push -u origin feature/init-structure` | branch を GitHub に送信＆追跡設定 |
+| `git switch main` | main ブランチに切り替え |
+| `git pull origin main` | GitHub から最新を取得＆マージ |
+| `git branch` | ローカルブランチ一覧 |
+| `git branch -r` | リモートブランチ一覧 |
+| `git branch -a` | 全ブランチ表示 |
+| `git fetch --prune` | 削除された remote branch をローカルからも削除 |
+
+### 完成させたサイクル
+
+```
+① feature branch 作成（git switch -c）
+② ローカルで 3つの commit
+③ GitHub に push（git push -u）
+④ Pull Request 作成（GitHub UI）
+⑤ マージ（GitHub UI）
+⑥ ローカル main を更新（git pull）
+⑦ リモート追跡 branch をクリーンアップ（git fetch --prune）
+```
+
+### 重要な気付き
+
+- **Branch は単なるポインタ**: 削除しても commit 履歴は永遠に残る
+- **Pull Request の価値**: 1人開発でも、コード確認 → merge という習慣は大事
+- **Git + GitHub の協力体制**:
+  - Git：ローカルの履歴管理
+  - GitHub：リモートの履歴管理 + PR による確認プロセス
+
+### 疑問から学ぶ（重要）
+
+- 「add と commit に分かれてるのは面倒？」→ 実は細かい制御ができるから強力
+- 「branch 名が同じになるのはなぜデフォルト継承されない？」→ Git は柔軟性を優先（違う名前で push したい人もいる）
+- 「branch を削除しても大丈夫？」→ 実は commit 履歴は残るから安全
+- 「fetch と pull は何が違う？」→ 自動 merge の有無（便利さ vs 確認機会）
+
+### 次のセッション
+
+- [ ] 常備品プリセット機能を feature ブランチで実装
+- [ ] 同じワークフロー（branch → commit → push → PR → merge）を繰り返す
