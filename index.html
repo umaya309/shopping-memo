@@ -488,9 +488,9 @@
         // ========== LAYER 4: DragSystem ==========
         const DragSystem = {
             LONG_PRESS_MS:    300,
-            MOVE_CANCEL_PX:   8,
+            MOVE_CANCEL_PX:   15,  // スクロール誤検知防止で拡大
             FLIP_DURATION_MS: 250,
-            HYSTERESIS_PX:    16,  // 中心からこの幅は無反応ゾーン
+            HYSTERESIS_PX:    16,
 
             state: {
                 isDragging:     false,
@@ -515,6 +515,12 @@
             },
 
             _onTouchStart(e) {
+                // ピンチ（2本指以上）は長押しをキャンセル
+                if (e.touches.length > 1) {
+                    clearTimeout(this.state.longPressTimer);
+                    this.state.longPressTimer = null;
+                    return;
+                }
                 const panel = e.target.closest('.panel');
                 if (!panel || e.target.closest('button')) return;
                 const touch = e.touches[0];
@@ -594,11 +600,17 @@
                 // アニメーション中は入れ替えしない（振動バグ防止）
                 if (this.state.isFlipping) return;
 
-                // 最近傍パネルを探す（プレースホルダー除く）
+                // 最近傍パネルを探す（パネル内 → 距離の順で優先）
                 const panels = [...document.querySelectorAll('#gridContainer .panel:not(.drag-source)')];
                 let closest = null, closestDist = Infinity;
                 panels.forEach(p => {
                     const r = p.getBoundingClientRect();
+                    // タッチ点がパネルの中にある場合は最優先
+                    if (touch.clientX >= r.left && touch.clientX <= r.right &&
+                        touch.clientY >= r.top  && touch.clientY <= r.bottom) {
+                        closest = p; closestDist = -1; return;
+                    }
+                    if (closestDist === -1) return;
                     const d = Math.hypot(touch.clientX - (r.left + r.width / 2),
                                          touch.clientY - (r.top  + r.height / 2));
                     if (d < closestDist) { closestDist = d; closest = p; }
@@ -615,9 +627,13 @@
                 // 前回と同じ位置なら何もしない
                 if (newNextSibling === this.state.lastNextSibling) return;
 
-                // FLIP: 移動前の座標を記録
                 const container = document.getElementById('gridContainer');
                 const allPanels = [...container.querySelectorAll('.panel')];
+
+                // 進行中アニメーションを完了させてから座標取得（ズレ防止）
+                allPanels.forEach(p => p.getAnimations().forEach(a => a.finish()));
+
+                // FLIP: 移動前の座標を記録
                 const before = {};
                 allPanels.forEach(p => {
                     before[p.dataset.itemId] = p.getBoundingClientRect();
