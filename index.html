@@ -19,7 +19,6 @@
             padding: 16px;
             background: #ffffff;
             color: #000000;
-            transition: background-color 0.2s, color 0.2s;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -60,15 +59,6 @@
             cursor: pointer;
             background: #007AFF;
             color: white;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background: #0051D5;
-        }
-
-        button:active {
-            opacity: 0.8;
         }
 
         .grid-container {
@@ -77,19 +67,7 @@
             gap: 12px;
             overflow-y: auto;
             overflow-x: hidden;
-            max-height: calc(100vh - 200px);
-        }
-
-        @media (max-width: 768px) {
-            .grid-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .grid-container {
-                grid-template-columns: 1fr;
-            }
+            -webkit-overflow-scrolling: touch;
         }
 
         .panel {
@@ -97,9 +75,12 @@
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             padding: 12px;
-            transition: all 0.2s;
             display: flex;
             flex-direction: column;
+            transition: opacity 0.15s, transform 0.15s;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -119,6 +100,23 @@
                 background: #1b5e20;
                 border-color: #4caf50;
             }
+        }
+
+        /* ドラッグ中の元パネル（非表示プレースホルダー） */
+        .panel.drag-placeholder {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* フローティングクローン */
+        .panel-clone {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.92;
+            transform: scale(1.06);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            transition: transform 0.1s, box-shadow 0.1s;
         }
 
         .panel-name {
@@ -150,6 +148,7 @@
             margin-top: auto;
         }
 
+        /* トグルスイッチ */
         .toggle-switch {
             width: 50px;
             height: 28px;
@@ -174,6 +173,7 @@
             background: white;
             border-radius: 12px;
             transition: transform 0.3s;
+            pointer-events: none;
         }
 
         .toggle-switch.on .toggle-slider {
@@ -187,49 +187,14 @@
             margin-left: auto;
         }
 
-        .delete-btn:hover {
-            background: #d32f2f;
-        }
-
         .empty-state {
             text-align: center;
             padding: 40px 20px;
             opacity: 0.6;
+            grid-column: 1 / -1;
         }
 
-        .add-panel {
-            background: #f5f5f5;
-            border: 2px dashed #999;
-            border-radius: 8px;
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .add-panel {
-                background: #2a2a2a;
-                border-color: #666;
-            }
-        }
-
-        .add-panel:hover {
-            border-color: #007AFF;
-            background: #f0f8ff;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .add-panel:hover {
-                background: #1a3a52;
-            }
-        }
-
-        .add-panel-text {
-            font-size: 32px;
-            margin: 0;
-        }
-
+        /* ========== Modal ========== */
         .modal {
             display: none;
             position: fixed;
@@ -278,8 +243,7 @@
             font-weight: 500;
         }
 
-        input[type="text"],
-        select {
+        input[type="text"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -289,8 +253,7 @@
         }
 
         @media (prefers-color-scheme: dark) {
-            input[type="text"],
-            select {
+            input[type="text"] {
                 background: #1a1a1a;
                 color: #e0e0e0;
                 border-color: #404040;
@@ -301,7 +264,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
         }
 
         .tag-option {
@@ -311,12 +274,12 @@
             cursor: pointer;
             font-size: 12px;
             background: transparent;
-            transition: all 0.2s;
         }
 
         @media (prefers-color-scheme: dark) {
             .tag-option {
                 border-color: #404040;
+                color: #e0e0e0;
             }
         }
 
@@ -339,16 +302,12 @@
         .cancel-btn {
             background: #999;
         }
-
-        .cancel-btn:hover {
-            background: #757575;
-        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>買い物メモ</h1>
-        <p>常備品をON/OFFして買い物リストを作成</p>
+        <p>長押しで並び替え／トグルでON・OFF</p>
     </div>
 
     <div class="controls">
@@ -360,6 +319,7 @@
         <div class="empty-state">読み込み中...</div>
     </div>
 
+    <!-- Add Item Modal -->
     <div class="modal" id="addItemModal">
         <div class="modal-content">
             <h2>新規アイテム</h2>
@@ -370,7 +330,7 @@
             <div class="form-group">
                 <label>タグを選択</label>
                 <div class="tag-selector" id="tagSelector"></div>
-                <button onclick="EventHandlers.openNewTagModal()" style="width: 100%; margin-top: 8px;">+ 新規タグ作成</button>
+                <button onclick="EventHandlers.openNewTagModal()" style="width:100%;margin-top:8px;">+ 新規タグ作成</button>
             </div>
             <div class="modal-actions">
                 <button class="cancel-btn" onclick="EventHandlers.closeAddItemModal()">キャンセル</button>
@@ -379,6 +339,7 @@
         </div>
     </div>
 
+    <!-- New Tag Modal -->
     <div class="modal" id="newTagModal">
         <div class="modal-content">
             <h2>新規タグ作成</h2>
@@ -393,6 +354,7 @@
         </div>
     </div>
 
+    <!-- Tag Management Modal -->
     <div class="modal" id="tagManagementModal">
         <div class="modal-content">
             <h2>タグ管理</h2>
@@ -404,14 +366,14 @@
     </div>
 
     <script>
-        // ========== LAYER 1: State Management ==========
+        // ========== LAYER 1: AppState ==========
         const AppState = {
             shoppingList: [],
             tags: [],
             selectedTagIds: [],
 
             init(presetItems) {
-                const saved = Storage.load('shoppingList');
+                const saved    = Storage.load('shoppingList');
                 const savedTags = Storage.load('tags');
 
                 if (!saved) {
@@ -424,13 +386,8 @@
                 this.save();
             },
 
-            getItems() {
-                return this.shoppingList;
-            },
-
-            getTags() {
-                return this.tags;
-            },
+            getItems() { return this.shoppingList; },
+            getTags()  { return this.tags; },
 
             addItem(name, tagIds) {
                 this.shoppingList.push({
@@ -444,10 +401,7 @@
 
             toggleNeeded(id) {
                 const item = this.shoppingList.find(i => i.id === id);
-                if (item) {
-                    item.needed = !item.needed;
-                    this.save();
-                }
+                if (item) { item.needed = !item.needed; this.save(); }
             },
 
             deleteItem(id) {
@@ -456,20 +410,15 @@
             },
 
             reorderItems(fromIndex, toIndex) {
+                if (fromIndex === toIndex) return;
                 const [item] = this.shoppingList.splice(fromIndex, 1);
                 this.shoppingList.splice(toIndex, 0, item);
                 this.save();
             },
 
             createTag(name) {
-                if (this.tags.some(t => t.name === name)) {
-                    throw new Error('このタグは既に存在します');
-                }
-                this.tags.push({
-                    id: Date.now().toString(),
-                    name,
-                    color: Utils.generateColor(),
-                });
+                if (this.tags.some(t => t.name === name)) throw new Error('このタグは既に存在します');
+                this.tags.push({ id: Date.now().toString(), name, color: Utils.generateColor() });
                 this.save();
             },
 
@@ -487,34 +436,40 @@
             },
         };
 
-        // ========== LAYER 2: Rendering ==========
+        // ========== LAYER 2: UI ==========
         const UI = {
             renderGrid() {
                 const container = document.getElementById('gridContainer');
                 const items = AppState.getItems();
-                const tags = AppState.getTags();
+                const tags  = AppState.getTags();
 
                 if (items.length === 0) {
                     container.innerHTML = '<div class="empty-state">アイテムがありません</div>';
                     return;
                 }
 
-                container.innerHTML = items.map(item => {
+                container.innerHTML = items.map((item, index) => {
                     const itemTags = item.tagIds
                         .map(tagId => tags.find(t => t.id === tagId))
                         .filter(Boolean);
 
                     return `
-                        <div class="panel ${item.needed ? 'needed' : ''}">
+                        <div class="panel ${item.needed ? 'needed' : ''}"
+                             data-item-id="${item.id}"
+                             data-index="${index}">
                             <div class="panel-name">${Utils.escapeHtml(item.name)}</div>
                             <div class="panel-tags">
-                                ${itemTags.map(tag => `<span class="tag" style="background: ${tag.color}">${Utils.escapeHtml(tag.name)}</span>`).join('')}
+                                ${itemTags.map(tag =>
+                                    `<span class="tag" style="background:${tag.color}">${Utils.escapeHtml(tag.name)}</span>`
+                                ).join('')}
                             </div>
                             <div class="panel-actions">
-                                <button class="toggle-switch ${item.needed ? 'on' : ''}" onclick="EventHandlers.onToggleNeeded(${item.id})" title="購入予定">
+                                <button class="toggle-switch ${item.needed ? 'on' : ''}"
+                                        onclick="EventHandlers.onToggleNeeded(${item.id})">
                                     <div class="toggle-slider"></div>
                                 </button>
-                                <button class="delete-btn" onclick="EventHandlers.onDeleteItem(${item.id})">削除</button>
+                                <button class="delete-btn"
+                                        onclick="EventHandlers.onDeleteItem(${item.id})">削除</button>
                             </div>
                         </div>
                     `;
@@ -523,14 +478,10 @@
 
             renderTagSelector() {
                 const container = document.getElementById('tagSelector');
-                const tags = AppState.getTags();
-
-                container.innerHTML = tags.map(tag => `
-                    <button
-                        type="button"
-                        class="tag-option ${AppState.selectedTagIds.includes(tag.id) ? 'selected' : ''}"
-                        onclick="EventHandlers.onToggleTagSelection('${tag.id}')"
-                    >
+                container.innerHTML = AppState.getTags().map(tag => `
+                    <button type="button"
+                            class="tag-option ${AppState.selectedTagIds.includes(tag.id) ? 'selected' : ''}"
+                            onclick="EventHandlers.onToggleTagSelection('${tag.id}')">
                         ${Utils.escapeHtml(tag.name)}
                     </button>
                 `).join('');
@@ -539,26 +490,22 @@
             renderTagManagement() {
                 const container = document.getElementById('tagList');
                 const tags = AppState.getTags();
-
-                if (tags.length === 0) {
-                    container.innerHTML = '<p>タグがありません</p>';
-                    return;
-                }
+                if (tags.length === 0) { container.innerHTML = '<p>タグがありません</p>'; return; }
 
                 container.innerHTML = tags.map(tag => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #ddd;">
-                        <span class="tag" style="background: ${tag.color}">${Utils.escapeHtml(tag.name)}</span>
-                        ${tag.id !== 'default' ? `<button class="delete-btn" onclick="EventHandlers.onDeleteTag('${tag.id}')">削除</button>` : ''}
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #ddd;">
+                        <span class="tag" style="background:${tag.color}">${Utils.escapeHtml(tag.name)}</span>
+                        ${tag.id !== 'default'
+                            ? `<button class="delete-btn" onclick="EventHandlers.onDeleteTag('${tag.id}')">削除</button>`
+                            : ''}
                     </div>
                 `).join('');
             },
 
-            renderAll() {
-                this.renderGrid();
-            },
+            renderAll() { this.renderGrid(); },
         };
 
-        // ========== LAYER 3: Event Handlers ==========
+        // ========== LAYER 3: EventHandlers ==========
         const EventHandlers = {
             onToggleNeeded(id) {
                 AppState.toggleNeeded(id);
@@ -575,7 +522,7 @@
             onDeleteTag(tagId) {
                 if (confirm('このタグを削除してもよろしいですか？')) {
                     AppState.deleteTag(tagId);
-                    this.renderTagManagement();
+                    UI.renderTagManagement();
                 }
             },
 
@@ -590,11 +537,7 @@
 
             submitAddItem() {
                 const name = document.getElementById('itemNameInput').value.trim();
-                if (!name) {
-                    alert('アイテム名を入力してください');
-                    return;
-                }
-
+                if (!name) { alert('アイテム名を入力してください'); return; }
                 AppState.addItem(name, AppState.selectedTagIds);
                 this.closeAddItemModal();
                 UI.renderAll();
@@ -602,18 +545,12 @@
 
             submitNewTag() {
                 const name = document.getElementById('tagNameInput').value.trim();
-                if (!name) {
-                    alert('タグ名を入力してください');
-                    return;
-                }
-
+                if (!name) { alert('タグ名を入力してください'); return; }
                 try {
                     AppState.createTag(name);
                     this.closeNewTagModal();
                     UI.renderTagSelector();
-                } catch (e) {
-                    alert(e.message);
-                }
+                } catch (e) { alert(e.message); }
             },
 
             openAddItemModal() {
@@ -621,101 +558,226 @@
                 UI.renderTagSelector();
                 document.getElementById('addItemModal').classList.add('active');
             },
-
             closeAddItemModal() {
                 document.getElementById('addItemModal').classList.remove('active');
                 document.getElementById('itemNameInput').value = '';
             },
-
             openNewTagModal() {
                 document.getElementById('newTagModal').classList.add('active');
             },
-
             closeNewTagModal() {
                 document.getElementById('newTagModal').classList.remove('active');
                 document.getElementById('tagNameInput').value = '';
             },
-
             openTagManagementModal() {
-                this.renderTagManagement();
+                UI.renderTagManagement();
                 document.getElementById('tagManagementModal').classList.add('active');
             },
-
             closeTagManagementModal() {
                 document.getElementById('tagManagementModal').classList.remove('active');
             },
-
-            renderTagManagement() {
-                UI.renderTagManagement();
-            },
         };
 
-        // ========== LAYER 4: Drag System (Future) ==========
+        // ========== LAYER 4: DragSystem ==========
         const DragSystem = {
+            LONG_PRESS_MS: 550,
+            MOVE_CANCEL_PX: 8,
+
             state: {
-                isDragging: false,
-                draggedItemId: null,
+                isDragging:    false,
+                longPressTimer: null,
+                startX: 0,
                 startY: 0,
+                offsetX: 0,
+                offsetY: 0,
+                fromIndex: -1,
+                cloneEl:   null,
+                sourceEl:  null,
             },
 
             init() {
-                // TODO: Touch event listeners for drag functionality
+                const container = document.getElementById('gridContainer');
+                container.addEventListener('touchstart',  e => this._onTouchStart(e),  { passive: true });
+                container.addEventListener('touchmove',   e => this._onTouchMove(e),   { passive: false });
+                container.addEventListener('touchend',    e => this._onTouchEnd(e));
+                container.addEventListener('touchcancel', () => this._cancel());
+            },
+
+            _onTouchStart(e) {
+                const panel = e.target.closest('.panel');
+                if (!panel || e.target.closest('button')) return;
+
+                const touch = e.touches[0];
+                this.state.startX = touch.clientX;
+                this.state.startY = touch.clientY;
+
+                this.state.longPressTimer = setTimeout(() => {
+                    this._startDrag(panel, touch);
+                }, this.LONG_PRESS_MS);
+            },
+
+            _onTouchMove(e) {
+                if (this.state.isDragging) {
+                    e.preventDefault();
+                    this._moveDrag(e.touches[0]);
+                    return;
+                }
+                // 指が大きく動いたら長押しキャンセル
+                if (this.state.longPressTimer) {
+                    const dx = e.touches[0].clientX - this.state.startX;
+                    const dy = e.touches[0].clientY - this.state.startY;
+                    if (Math.sqrt(dx * dx + dy * dy) > this.MOVE_CANCEL_PX) {
+                        clearTimeout(this.state.longPressTimer);
+                        this.state.longPressTimer = null;
+                    }
+                }
+            },
+
+            _onTouchEnd(e) {
+                clearTimeout(this.state.longPressTimer);
+                this.state.longPressTimer = null;
+                if (this.state.isDragging) this._endDrag();
+            },
+
+            _startDrag(panelEl, touch) {
+                const rect = panelEl.getBoundingClientRect();
+                const panels = [...document.querySelectorAll('#gridContainer .panel')];
+                this.state.fromIndex = panels.indexOf(panelEl);
+
+                // フローティングクローン作成
+                const clone = panelEl.cloneNode(true);
+                clone.classList.add('panel-clone');
+                clone.style.width  = `${rect.width}px`;
+                clone.style.height = `${rect.height}px`;
+                clone.style.left   = `${rect.left}px`;
+                clone.style.top    = `${rect.top}px`;
+                document.body.appendChild(clone);
+
+                // 元パネルをプレースホルダーに
+                panelEl.classList.add('drag-placeholder');
+
+                this.state.isDragging = true;
+                this.state.sourceEl   = panelEl;
+                this.state.cloneEl    = clone;
+                this.state.offsetX    = touch.clientX - rect.left;
+                this.state.offsetY    = touch.clientY - rect.top;
+
+                if (navigator.vibrate) navigator.vibrate(50);
+            },
+
+            _moveDrag(touch) {
+                const clone = this.state.cloneEl;
+                if (!clone) return;
+
+                // クローンを指に追従
+                clone.style.left = `${touch.clientX - this.state.offsetX}px`;
+                clone.style.top  = `${touch.clientY - this.state.offsetY}px`;
+
+                // 最も近いパネルを探して、プレースホルダーを移動
+                const panels = [...document.querySelectorAll('#gridContainer .panel:not(.drag-placeholder)')];
+                let closestPanel = null;
+                let closestDist  = Infinity;
+
+                panels.forEach(panel => {
+                    const r  = panel.getBoundingClientRect();
+                    const cx = r.left + r.width  / 2;
+                    const cy = r.top  + r.height / 2;
+                    const d  = Math.hypot(touch.clientX - cx, touch.clientY - cy);
+                    if (d < closestDist) { closestDist = d; closestPanel = panel; }
+                });
+
+                if (closestPanel) {
+                    const container = document.getElementById('gridContainer');
+                    const r  = closestPanel.getBoundingClientRect();
+                    const cx = r.left + r.width / 2;
+                    // 指がパネル中心より左 → 前に挿入、右 → 後に挿入
+                    if (touch.clientX < cx) {
+                        container.insertBefore(this.state.sourceEl, closestPanel);
+                    } else {
+                        container.insertBefore(this.state.sourceEl, closestPanel.nextSibling);
+                    }
+                }
+            },
+
+            _endDrag() {
+                const container = document.getElementById('gridContainer');
+                const panels    = [...container.querySelectorAll('.panel')];
+                const newIndex  = panels.indexOf(this.state.sourceEl);
+
+                // クローン削除・プレースホルダー解除
+                if (this.state.cloneEl) this.state.cloneEl.remove();
+                if (this.state.sourceEl) this.state.sourceEl.classList.remove('drag-placeholder');
+
+                // 順序変化があれば AppState に反映
+                if (newIndex !== -1 && newIndex !== this.state.fromIndex) {
+                    AppState.reorderItems(this.state.fromIndex, newIndex);
+                }
+
+                // リセット
+                this.state.isDragging  = false;
+                this.state.cloneEl     = null;
+                this.state.sourceEl    = null;
+                this.state.fromIndex   = -1;
+
+                UI.renderAll();
+            },
+
+            _cancel() {
+                clearTimeout(this.state.longPressTimer);
+                if (this.state.cloneEl)  this.state.cloneEl.remove();
+                if (this.state.sourceEl) this.state.sourceEl.classList.remove('drag-placeholder');
+                this.state.isDragging = false;
+                this.state.cloneEl    = null;
+                this.state.sourceEl   = null;
+                this.state.fromIndex  = -1;
+                UI.renderAll();
             },
         };
 
         // ========== LAYER 5: Storage ==========
         const Storage = {
             save(key, data) {
-                try {
-                    localStorage.setItem(key, JSON.stringify(data));
-                } catch (e) {
-                    console.error('Storage error:', e);
-                }
+                try { localStorage.setItem(key, JSON.stringify(data)); }
+                catch (e) { console.error('Storage error:', e); }
             },
-
             load(key) {
                 try {
-                    const data = localStorage.getItem(key);
-                    return data ? JSON.parse(data) : null;
-                } catch (e) {
-                    console.error('Parse error:', e);
-                    return null;
-                }
+                    const d = localStorage.getItem(key);
+                    return d ? JSON.parse(d) : null;
+                } catch (e) { console.error('Parse error:', e); return null; }
             },
         };
 
-        // ========== LAYER 6: Utilities ==========
+        // ========== LAYER 6: Utils ==========
         const Utils = {
             generateColor() {
-                const colors = [
-                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
-                    '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2',
-                ];
+                const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A',
+                                '#98D8C8','#F7DC6F','#BB8FCE','#85C1E2'];
                 return colors[Math.floor(Math.random() * colors.length)];
             },
-
             escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
+                const d = document.createElement('div');
+                d.textContent = text;
+                return d.innerHTML;
             },
         };
 
         // ========== Initialization ==========
         const PRESET_ITEMS = [
-            { id: 1, name: "塩", tagIds: ['default'], needed: false },
-            { id: 2, name: "砂糖", tagIds: ['default'], needed: false },
-            { id: 3, name: "醤油", tagIds: ['default'], needed: false },
+            { id: 1, name: "塩",     tagIds: ['default'], needed: false },
+            { id: 2, name: "砂糖",   tagIds: ['default'], needed: false },
+            { id: 3, name: "醤油",   tagIds: ['default'], needed: false },
             { id: 4, name: "みりん", tagIds: ['default'], needed: false },
-            { id: 5, name: "酢", tagIds: ['default'], needed: false },
-            { id: 6, name: "油", tagIds: ['default'], needed: false },
+            { id: 5, name: "酢",     tagIds: ['default'], needed: false },
+            { id: 6, name: "油",     tagIds: ['default'], needed: false },
             { id: 7, name: "小麦粉", tagIds: ['default'], needed: false },
-            { id: 8, name: "卵", tagIds: ['default'], needed: false },
+            { id: 8, name: "卵",     tagIds: ['default'], needed: false },
         ];
 
         function init() {
             AppState.init(PRESET_ITEMS);
             UI.renderAll();
+            DragSystem.init();
         }
 
         init();
