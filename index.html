@@ -21,11 +21,11 @@
         h1 { margin: 0 0 16px; font-size: 22px; text-align: center; }
 
         /* ── Category ── */
-        .cat-section { margin-bottom: 4px; }
+        .cat-section { margin-bottom: 8px; }
 
         .cat-header {
             display: flex; align-items: center; gap: 6px;
-            padding: 8px 2px 4px;
+            padding: 10px 8px 6px;
             cursor: pointer; user-select: none; -webkit-user-select: none;
         }
         .cat-arrow { font-size: 10px; color: #888; width: 14px; flex-shrink: 0; }
@@ -43,25 +43,32 @@
             .cat-name { color: #888; }
         }
 
-        .cat-body { display: flex; flex-direction: column; gap: 6px; padding-left: 4px; }
+        .cat-body {
+            background: #fafafa; border-radius: 10px;
+            padding: 8px; gap: 6px; display: flex;
+            flex-direction: column; border: 1px solid #f0f0f0;
+        }
+        @media (prefers-color-scheme: dark) {
+            .cat-body { background: #2a2a2a; border-color: #3a3a3a; }
+        }
 
         /* ── Panel ── */
         .panel {
             position: relative; background: #fff; border: 1px solid #e0e0e0;
-            border-radius: 10px; padding: 6px 8px;
+            border-radius: 8px; padding: 6px 8px;
             display: flex; align-items: center; gap: 8px;
             min-height: 52px; will-change: transform;
             user-select: none; -webkit-user-select: none; touch-action: auto;
         }
         @media (prefers-color-scheme: dark) {
-            .panel { background: #2a2a2a; border-color: #404040; }
+            .panel { background: #1a1a1a; border-color: #404040; }
         }
         .panel.needed {
             background: #f0faf0; border-color: #b2dfdb;
             border-left: 3px solid #4caf50;
         }
         @media (prefers-color-scheme: dark) {
-            .panel.needed { background: #1a2e1a; }
+            .panel.needed { background: #1a2e1a; border-color: #4caf50; }
         }
         .panel.drag-source { opacity: 0; pointer-events: none; }
         .panel.panel-dummy {
@@ -76,22 +83,8 @@
             background: #fff; border: 2px solid #007AFF; cursor: default;
         }
         @media (prefers-color-scheme: dark) {
-            .panel.panel-edit { background: #1e2640; }
+            .panel.panel-edit { background: #2a2a2a; border-color: #007AFF; }
         }
-
-        /* ── Toggle ── */
-        .toggle {
-            width: 44px; min-width: 44px; height: 26px;
-            background: #ccc; border-radius: 13px; border: none;
-            cursor: pointer; display: flex; align-items: center;
-            padding: 2px; transition: background .2s; flex-shrink: 0;
-        }
-        .toggle.on { background: #4caf50; }
-        .toggle-knob {
-            width: 22px; height: 22px; background: #fff;
-            border-radius: 50%; transition: transform .2s; pointer-events: none;
-        }
-        .toggle.on .toggle-knob { transform: translateX(18px); }
 
         /* ── Photo frame ── */
         .photo {
@@ -112,6 +105,20 @@
             background: transparent; padding: 0;
             font-family: inherit; color: inherit;
         }
+
+        /* ── Toggle ── */
+        .toggle {
+            width: 44px; min-width: 44px; height: 26px;
+            background: #ccc; border-radius: 13px; border: none;
+            cursor: pointer; display: flex; align-items: center;
+            padding: 2px; transition: background .2s; flex-shrink: 0;
+        }
+        .toggle.on { background: #4caf50; }
+        .toggle-knob {
+            width: 22px; height: 22px; background: #fff;
+            border-radius: 50%; transition: transform .2s; pointer-events: none;
+        }
+        .toggle.on .toggle-knob { transform: translateX(18px); }
 
         /* ── Drag handle ── */
         .drag-handle {
@@ -143,7 +150,7 @@
         }
         @media (prefers-color-scheme: dark) {
             .add-cat { border-color: #444; color: #555; }
-            .add-cat-edit { background: #1e2640; }
+            .add-cat-edit { background: #2a2a2a; }
         }
         .add-cat-input {
             width: 100%; border: none; outline: none;
@@ -157,7 +164,6 @@
     <div id="app"></div>
 
     <script>
-    // ========== AppState ==========
     const AppState = {
         categories: [],
         items: [],
@@ -231,9 +237,8 @@
         },
     };
 
-    // ========== UI ==========
     const UI = {
-        editId: null,   // null | 'item-{id}' | 'new-{catId}' | 'cat-{catId}' | 'newcat'
+        editId: null,
         _outsideOff: null,
 
         render() {
@@ -244,10 +249,8 @@
             document.getElementById('app').innerHTML = html;
 
             if (this.editId !== null) {
-                requestAnimationFrame(() => {
-                    const el = document.getElementById('ii');
-                    if (el) { el.focus(); if (el.select) el.select(); }
-                });
+                const el = document.getElementById('ii');
+                if (el) { el.focus(); if (el.select) el.select(); }
             }
         },
 
@@ -289,12 +292,12 @@
             }
             return `<div class="panel ${item.needed ? 'needed' : ''}" data-id="${item.id}"
                          onclick="UI.enter('item-${item.id}')">
+                <div class="photo"></div>
+                <span class="item-name">${escH(item.name)}</span>
                 <button class="toggle ${item.needed ? 'on' : ''}"
                         onclick="event.stopPropagation();EH.toggle(${item.id})">
                     <div class="toggle-knob"></div>
                 </button>
-                <div class="photo"></div>
-                <span class="item-name">${escH(item.name)}</span>
                 <div class="drag-handle" onclick="event.stopPropagation()">⠿</div>
             </div>`;
         },
@@ -326,7 +329,7 @@
 
         enter(id) {
             if (this.editId === id) return;
-            if (this.editId !== null) this._save();   // 別パネルの編集を保存してから切替
+            if (this.editId !== null) this._save();
             this.editId = id;
             this.render();
 
@@ -368,7 +371,6 @@
         },
     };
 
-    // ========== EventHandlers ==========
     const EH = {
         toggleCat(catId) { AppState.toggleCat(catId); UI.render(); },
         toggle(id)       { AppState.toggleNeeded(id); UI.render(); },
@@ -383,7 +385,6 @@
         },
     };
 
-    // ========== DragSystem ==========
     const Drag = {
         FLIP_MS: 180,
         s: {
@@ -395,8 +396,7 @@
         _mv: null, _up: null, _cx: null,
 
         init() {
-            document.getElementById('app')
-                .addEventListener('touchstart', e => this._ts(e), { passive: true });
+            document.addEventListener('touchstart', e => this._ts(e), { passive: true });
         },
 
         _ts(e) {
@@ -438,15 +438,34 @@
         },
 
         _move(t) {
-            const { clone, src, ox, oy, catBody } = this.s;
+            const { clone, src, ox, oy } = this.s;
             if (!clone) return;
             clone.style.left = `${t.clientX - ox}px`;
             clone.style.top  = `${t.clientY - oy}px`;
             if (this.s.flipping) return;
 
-            // 指のY座標で判定（レスポンシブ）
             const ty = t.clientY;
-            const panels = [...catBody.querySelectorAll('.panel:not(.drag-source):not(.panel-dummy)')];
+
+            // Find which category the clone is over
+            const bodies = [...document.querySelectorAll('.cat-body')];
+            let targetBody = this.s.catBody;
+            for (const b of bodies) {
+                const r = b.getBoundingClientRect();
+                if (ty >= r.top && ty <= r.bottom) {
+                    targetBody = b;
+                    break;
+                }
+            }
+
+            // Switch category if needed
+            const newCatId = targetBody.dataset.cat;
+            if (newCatId !== this.s.catId) {
+                this.s.catId = newCatId;
+                this.s.catBody = targetBody;
+                this.s.lastNext = null;
+            }
+
+            const panels = [...targetBody.querySelectorAll('.panel:not(.drag-source):not(.panel-dummy)')];
             let best = null, bestD = Infinity;
             panels.forEach(p => {
                 const r = p.getBoundingClientRect();
@@ -457,19 +476,19 @@
 
             const bc  = best.getBoundingClientRect();
             const bcy = bc.top + bc.height / 2;
-            const dummy = catBody.querySelector('.panel-dummy');
+            const dummy = targetBody.querySelector('.panel-dummy');
             let next = ty < bcy ? best : best.nextSibling;
-            if (next === null) next = dummy;   // dummy が末尾を保証
+            if (next === null) next = dummy;
 
             if (next === this.s.lastNext) return;
 
-            const all = [...catBody.querySelectorAll('.panel:not(.panel-dummy)')];
+            const all = [...targetBody.querySelectorAll('.panel:not(.panel-dummy)')];
             all.forEach(p => p.getAnimations().forEach(a => a.finish()));
 
             const pre = {};
             all.forEach(p => { pre[p.dataset.id] = p.getBoundingClientRect(); });
 
-            catBody.insertBefore(src, next);
+            targetBody.insertBefore(src, next);
             this.s.lastNext = next;
             this.s.flipping = true;
             setTimeout(() => { this.s.flipping = false; }, this.FLIP_MS + 30);
@@ -488,17 +507,22 @@
         _end() {
             this._off();
             const { catBody, catId, src, clone } = this.s;
+            const srcId = +src.dataset.id;
+            const srcItem = AppState.items.find(i => i.id === srcId);
+            const oldCat = srcItem.categoryId;
+
             const panels  = [...catBody.querySelectorAll('.panel:not(.panel-dummy)')];
             const newOrder = panels.map(p => +p.dataset.id);
-            const oldOrder = AppState.getItemsByCat(catId).map(i => i.id);
 
             clone.remove();
             src.classList.remove('drag-source');
 
-            if (JSON.stringify(newOrder) !== JSON.stringify(oldOrder)) {
-                AppState.reorderInCat(catId, newOrder);
-                UI.render();
-            }
+            // Update categoryId if moved to different category
+            srcItem.categoryId = catId;
+
+            // Reorder in the (possibly new) category
+            AppState.reorderInCat(catId, newOrder);
+            UI.render();
             this._reset();
         },
 
@@ -524,17 +548,14 @@
         },
     };
 
-    // ========== Storage ==========
     const Storage = {
         save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} },
         load(k)    { try { const d = localStorage.getItem(k); return d ? JSON.parse(d) : null; } catch(e){ return null; } },
     };
 
-    // ========== Utils ==========
     function escH(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
     function esc(t)  { return String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 
-    // ========== Init ==========
     const CATS = [
         { id: 'c1', name: '常備品', collapsed: false },
         { id: 'c2', name: '食材',   collapsed: false },
