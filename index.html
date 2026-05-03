@@ -10,699 +10,548 @@
     <title>買い物メモ</title>
     <style>
         * { box-sizing: border-box; }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 16px;
-            background: #ffffff;
-            color: #000000;
+            margin: 0; padding: 16px;
+            background: #f2f2f7; color: #000;
         }
-
         @media (prefers-color-scheme: dark) {
             body { background: #1a1a1a; color: #e0e0e0; }
         }
+        h1 { margin: 0 0 16px; font-size: 22px; text-align: center; }
 
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
+        /* ── Category ── */
+        .cat-section { margin-bottom: 4px; }
+
+        .cat-header {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 2px 4px;
+            cursor: pointer; user-select: none; -webkit-user-select: none;
         }
-        .header h1 { margin: 0 0 4px 0; font-size: 22px; }
-        .header p  { margin: 0; opacity: 0.6; font-size: 12px; }
-
-        .controls {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
+        .cat-arrow { font-size: 10px; color: #888; width: 14px; flex-shrink: 0; }
+        .cat-name  {
+            font-size: 12px; font-weight: 700; color: #666;
+            letter-spacing: 0.8px; text-transform: uppercase; flex: 1;
         }
-
-        button {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            background: #007AFF;
-            color: white;
+        .cat-name-input {
+            flex: 1; border: none; border-bottom: 2px solid #007AFF;
+            outline: none; font-size: 12px; font-weight: 700;
+            background: transparent; padding: 0; font-family: inherit;
+            color: inherit; letter-spacing: 0.8px;
         }
-
-        /* ===== List ===== */
-        .grid-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        @media (prefers-color-scheme: dark) {
+            .cat-name { color: #888; }
         }
 
-        /* ===== Panel ===== */
+        .cat-body { display: flex; flex-direction: column; gap: 6px; padding-left: 4px; }
+
+        /* ── Panel ── */
         .panel {
-            position: relative;
-            background: #f5f5f5;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 6px 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-height: 54px;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: auto;
-            will-change: transform;
-            cursor: pointer;
+            position: relative; background: #fff; border: 1px solid #e0e0e0;
+            border-radius: 10px; padding: 6px 8px;
+            display: flex; align-items: center; gap: 8px;
+            min-height: 52px; will-change: transform;
+            user-select: none; -webkit-user-select: none; touch-action: auto;
         }
-
         @media (prefers-color-scheme: dark) {
             .panel { background: #2a2a2a; border-color: #404040; }
         }
-
         .panel.needed {
-            background: #e8f5e9;
-            border-color: #4caf50;
-            border-left: 4px solid #4caf50;
+            background: #f0faf0; border-color: #b2dfdb;
+            border-left: 3px solid #4caf50;
         }
         @media (prefers-color-scheme: dark) {
-            .panel.needed { background: #1b5e20; border-color: #4caf50; }
+            .panel.needed { background: #1a2e1a; }
         }
-
-        .panel.drag-source {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* 削除ボタン */
-        .btn-delete {
-            width: 28px;
-            min-width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: #f44336;
-            color: white;
-            font-size: 22px;
-            font-weight: 300;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-            flex-shrink: 0;
-        }
-
-        /* 写真枠 */
-        .photo-frame {
-            width: 40px;
-            min-width: 40px;
-            height: 40px;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-            background: #e8e8e8;
-            flex-shrink: 0;
-            overflow: hidden;
+        .panel.drag-source { opacity: 0; pointer-events: none; }
+        .panel.panel-dummy {
+            background: transparent; border: 1.5px dashed #ccc;
+            justify-content: center; color: #bbb; font-size: 13px;
+            min-height: 40px; cursor: pointer;
         }
         @media (prefers-color-scheme: dark) {
-            .photo-frame { background: #3a3a3a; border-color: #555; }
+            .panel.panel-dummy { border-color: #444; color: #555; }
+        }
+        .panel.panel-edit {
+            background: #fff; border: 2px solid #007AFF; cursor: default;
+        }
+        @media (prefers-color-scheme: dark) {
+            .panel.panel-edit { background: #1e2640; }
         }
 
-        /* アイテム名 */
+        /* ── Toggle ── */
+        .toggle {
+            width: 44px; min-width: 44px; height: 26px;
+            background: #ccc; border-radius: 13px; border: none;
+            cursor: pointer; display: flex; align-items: center;
+            padding: 2px; transition: background .2s; flex-shrink: 0;
+        }
+        .toggle.on { background: #4caf50; }
+        .toggle-knob {
+            width: 22px; height: 22px; background: #fff;
+            border-radius: 50%; transition: transform .2s; pointer-events: none;
+        }
+        .toggle.on .toggle-knob { transform: translateX(18px); }
+
+        /* ── Photo frame ── */
+        .photo {
+            width: 38px; min-width: 38px; height: 38px;
+            border-radius: 6px; border: 1px solid #ddd;
+            background: #ebebeb; flex-shrink: 0; overflow: hidden;
+        }
+        @media (prefers-color-scheme: dark) { .photo { background: #3a3a3a; border-color: #555; } }
+
+        /* ── Name ── */
         .item-name {
-            flex: 1;
-            font-size: 14px;
-            font-weight: 500;
-            line-height: 1.3;
-            word-break: break-word;
+            flex: 1; font-size: 14px; font-weight: 500;
+            line-height: 1.3; word-break: break-word; cursor: pointer;
+        }
+        .item-name-input {
+            flex: 1; border: none; outline: none;
+            font-size: 14px; font-weight: 500;
+            background: transparent; padding: 0;
+            font-family: inherit; color: inherit;
         }
 
-        /* ドラッグハンドル */
+        /* ── Drag handle ── */
         .drag-handle {
-            font-size: 20px;
-            color: #c0c0c0;
-            padding: 4px 6px;
-            min-width: 32px;
-            text-align: center;
-            touch-action: none;
-            cursor: grab;
+            font-size: 20px; color: #ccc; min-width: 28px;
+            padding: 4px; text-align: center;
+            touch-action: none; flex-shrink: 0;
+        }
+        @media (prefers-color-scheme: dark) { .drag-handle { color: #555; } }
+
+        /* ── Delete button (edit mode only) ── */
+        .btn-del {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: #ffebee; color: #e53935; border: none;
+            font-size: 17px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
-        @media (prefers-color-scheme: dark) {
-            .drag-handle { color: #666; }
-        }
+        @media (prefers-color-scheme: dark) { .btn-del { background: #3a1515; color: #ef9a9a; } }
 
-        /* タグ（右上に絶対配置） */
-        .panel-tags-corner {
-            position: absolute;
-            top: 3px;
-            right: 38px;
-            display: flex;
-            gap: 3px;
-            pointer-events: none;
-            max-width: 45%;
-            overflow: hidden;
+        /* ── Add category dummy ── */
+        .add-cat {
+            margin-top: 12px; padding: 10px;
+            border: 1.5px dashed #ccc; border-radius: 8px;
+            text-align: center; color: #bbb; font-size: 13px; cursor: pointer;
         }
-
-        .tag-chip {
-            font-size: 9px;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 80px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            opacity: 0.6;
-        }
-
-        /* ===== Modal ===== */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal.active { display: flex; }
-
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        .add-cat-edit {
+            margin-top: 12px; padding: 10px 12px;
+            border: 2px solid #007AFF; border-radius: 8px; background: #fff;
         }
         @media (prefers-color-scheme: dark) {
-            .modal-content { background: #2a2a2a; }
+            .add-cat { border-color: #444; color: #555; }
+            .add-cat-edit { background: #1e2640; }
         }
-        .modal-content h2 { margin: 0 0 16px 0; font-size: 20px; }
-
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-size: 14px; margin-bottom: 4px; font-weight: 500; }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
+        .add-cat-input {
+            width: 100%; border: none; outline: none;
+            font-size: 14px; background: transparent;
+            font-family: inherit; color: inherit;
         }
-        @media (prefers-color-scheme: dark) {
-            input[type="text"] { background: #1a1a1a; color: #e0e0e0; border-color: #404040; }
-        }
-
-        .tag-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-
-        .tag-option {
-            padding: 8px 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            background: transparent;
-        }
-        @media (prefers-color-scheme: dark) {
-            .tag-option { border-color: #404040; color: #e0e0e0; }
-        }
-        .tag-option.selected { background: #007AFF; color: white; border-color: #007AFF; }
-
-        .modal-actions { display: flex; gap: 8px; margin-top: 24px; }
-        .modal-actions button { flex: 1; }
-        .cancel-btn { background: #999; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>買い物メモ</h1>
-        <p>タップでON・OFF／右端をドラッグで並び替え</p>
-    </div>
-
-    <div class="controls">
-        <button onclick="EventHandlers.openAddItemModal()">+ 新規追加</button>
-        <button onclick="EventHandlers.openTagManagementModal()">タグ管理</button>
-    </div>
-
-    <div class="grid-container" id="gridContainer"></div>
-
-    <!-- Add Item Modal -->
-    <div class="modal" id="addItemModal">
-        <div class="modal-content">
-            <h2>新規アイテム</h2>
-            <div class="form-group">
-                <label>アイテム名</label>
-                <input type="text" id="itemNameInput" placeholder="塩、砂糖など">
-            </div>
-            <div class="form-group">
-                <label>タグを選択</label>
-                <div class="tag-selector" id="tagSelector"></div>
-                <button onclick="EventHandlers.openNewTagModal()" style="width:100%;margin-top:8px;">+ 新規タグ作成</button>
-            </div>
-            <div class="modal-actions">
-                <button class="cancel-btn" onclick="EventHandlers.closeAddItemModal()">キャンセル</button>
-                <button onclick="EventHandlers.submitAddItem()">追加</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- New Tag Modal -->
-    <div class="modal" id="newTagModal">
-        <div class="modal-content">
-            <h2>新規タグ作成</h2>
-            <div class="form-group">
-                <label>タグ名</label>
-                <input type="text" id="tagNameInput" placeholder="調味料、スーパーAなど">
-            </div>
-            <div class="modal-actions">
-                <button class="cancel-btn" onclick="EventHandlers.closeNewTagModal()">キャンセル</button>
-                <button onclick="EventHandlers.submitNewTag()">作成</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tag Management Modal -->
-    <div class="modal" id="tagManagementModal">
-        <div class="modal-content">
-            <h2>タグ管理</h2>
-            <div id="tagList"></div>
-            <div class="modal-actions">
-                <button onclick="EventHandlers.closeTagManagementModal()">閉じる</button>
-            </div>
-        </div>
-    </div>
+    <h1>買い物メモ</h1>
+    <div id="app"></div>
 
     <script>
-        // ========== LAYER 1: AppState ==========
-        const AppState = {
-            shoppingList: [],
-            tags: [],
-            selectedTagIds: [],
+    // ========== AppState ==========
+    const AppState = {
+        categories: [],
+        items: [],
 
-            init(presetItems) {
-                const saved     = Storage.load('shoppingList');
-                const savedTags = Storage.load('tags');
-                if (!saved) {
-                    this.shoppingList = JSON.parse(JSON.stringify(presetItems));
-                    this.tags = [{ id: 'default', name: '未分類', color: '#999999' }];
+        init(presetCats, presetItems) {
+            const c = Storage.load('categories2');
+            const i = Storage.load('items2');
+            if (!c) {
+                this.categories = JSON.parse(JSON.stringify(presetCats));
+                this.items      = JSON.parse(JSON.stringify(presetItems));
+            } else {
+                this.categories = c;
+                this.items      = i || [];
+            }
+            this.save();
+        },
+
+        getCategories()          { return this.categories; },
+        getItems()               { return this.items; },
+        getItemsByCat(catId)     { return this.items.filter(i => i.categoryId === catId); },
+
+        toggleCat(catId) {
+            const c = this.categories.find(c => c.id === catId);
+            if (c) { c.collapsed = !c.collapsed; this.save(); }
+        },
+        addCategory(name) {
+            this.categories.push({ id: 't' + Date.now(), name, collapsed: false });
+            this.save();
+        },
+        updateCatName(catId, name) {
+            const c = this.categories.find(c => c.id === catId);
+            if (c) { c.name = name; this.save(); }
+        },
+
+        addItem(name, categoryId) {
+            this.items.push({ id: Date.now(), name, categoryId, needed: false });
+            this.save();
+        },
+        updateItemName(id, name) {
+            const i = this.items.find(i => i.id === id);
+            if (i) { i.name = name; this.save(); }
+        },
+        toggleNeeded(id) {
+            const i = this.items.find(i => i.id === id);
+            if (i) { i.needed = !i.needed; this.save(); }
+        },
+        deleteItem(id) {
+            this.items = this.items.filter(i => i.id !== id);
+            this.save();
+        },
+
+        reorderInCat(categoryId, newOrderIds) {
+            const reordered = newOrderIds.map(id => this.items.find(i => i.id === id)).filter(Boolean);
+            const result = [];
+            let placed = false;
+            for (const item of this.items) {
+                if (item.categoryId === categoryId) {
+                    if (!placed) { result.push(...reordered); placed = true; }
                 } else {
-                    this.shoppingList = saved;
-                    this.tags = savedTags || [{ id: 'default', name: '未分類', color: '#999999' }];
+                    result.push(item);
                 }
-                this.save();
-            },
+            }
+            if (!placed) result.push(...reordered);
+            this.items = result;
+            this.save();
+        },
 
-            getItems() { return this.shoppingList; },
-            getTags()  { return this.tags; },
+        save() {
+            Storage.save('categories2', this.categories);
+            Storage.save('items2',      this.items);
+        },
+    };
 
-            addItem(name, tagIds) {
-                this.shoppingList.push({
-                    id: Date.now(),
-                    name,
-                    tagIds: tagIds.length > 0 ? tagIds : ['default'],
-                    needed: false,
+    // ========== UI ==========
+    const UI = {
+        editId: null,   // null | 'item-{id}' | 'new-{catId}' | 'cat-{catId}' | 'newcat'
+        _outsideOff: null,
+
+        render() {
+            const cats  = AppState.getCategories();
+            const items = AppState.getItems();
+            let html = cats.map(c => this._cat(c, items.filter(i => i.categoryId === c.id))).join('');
+            html += this._addCatBlock();
+            document.getElementById('app').innerHTML = html;
+
+            if (this.editId !== null) {
+                requestAnimationFrame(() => {
+                    const el = document.getElementById('ii');
+                    if (el) { el.focus(); if (el.select) el.select(); }
                 });
-                this.save();
-            },
+            }
+        },
 
-            toggleNeeded(id) {
-                const item = this.shoppingList.find(i => i.id === id);
-                if (item) { item.needed = !item.needed; this.save(); }
-            },
+        _cat(cat, catItems) {
+            const editingName = this.editId === `cat-${cat.id}`;
+            const nameEl = editingName
+                ? `<input id="ii" class="cat-name-input"
+                          value="${esc(cat.name)}"
+                          onkeydown="EH.key(event)"
+                          onclick="event.stopPropagation()">`
+                : `<span class="cat-name"
+                         onclick="event.stopPropagation();UI.enter('cat-${cat.id}')"
+                         >${escH(cat.name)}</span>`;
 
-            deleteItem(id) {
-                this.shoppingList = this.shoppingList.filter(i => i.id !== id);
-                this.save();
-            },
+            return `<div class="cat-section" data-cat="${cat.id}">
+                <div class="cat-header" onclick="EH.toggleCat('${cat.id}')">
+                    <span class="cat-arrow">${cat.collapsed ? '▶' : '▼'}</span>
+                    ${nameEl}
+                </div>
+                ${cat.collapsed ? '' : `
+                <div class="cat-body" data-cat="${cat.id}">
+                    ${catItems.map(i => this._panel(i)).join('')}
+                    ${this._addItemDummy(cat.id)}
+                </div>`}
+            </div>`;
+        },
 
-            reorderItems(fromIndex, toIndex) {
-                if (fromIndex === toIndex) return;
-                const [item] = this.shoppingList.splice(fromIndex, 1);
-                this.shoppingList.splice(toIndex, 0, item);
-                this.save();
-            },
+        _panel(item) {
+            if (this.editId === `item-${item.id}`) {
+                return `<div class="panel panel-edit" data-id="${item.id}">
+                    <div class="photo"></div>
+                    <input id="ii" class="item-name-input"
+                           value="${esc(item.name)}"
+                           onkeydown="EH.key(event)"
+                           onclick="event.stopPropagation()">
+                    <button class="btn-del"
+                            onclick="event.stopPropagation();EH.del(${item.id})">🗑</button>
+                </div>`;
+            }
+            return `<div class="panel ${item.needed ? 'needed' : ''}" data-id="${item.id}"
+                         onclick="UI.enter('item-${item.id}')">
+                <button class="toggle ${item.needed ? 'on' : ''}"
+                        onclick="event.stopPropagation();EH.toggle(${item.id})">
+                    <div class="toggle-knob"></div>
+                </button>
+                <div class="photo"></div>
+                <span class="item-name">${escH(item.name)}</span>
+                <div class="drag-handle" onclick="event.stopPropagation()">⠿</div>
+            </div>`;
+        },
 
-            createTag(name) {
-                if (this.tags.some(t => t.name === name)) throw new Error('このタグは既に存在します');
-                this.tags.push({ id: Date.now().toString(), name, color: Utils.generateColor() });
-                this.save();
-            },
+        _addItemDummy(catId) {
+            if (this.editId === `new-${catId}`) {
+                return `<div class="panel panel-edit" data-new-cat="${catId}">
+                    <div class="photo"></div>
+                    <input id="ii" class="item-name-input"
+                           placeholder="アイテム名..."
+                           onkeydown="EH.key(event)"
+                           onclick="event.stopPropagation()">
+                </div>`;
+            }
+            return `<div class="panel panel-dummy" onclick="UI.enter('new-${catId}')">＋ 追加</div>`;
+        },
 
-            deleteTag(tagId) {
-                this.tags = this.tags.filter(t => t.id !== tagId);
-                this.shoppingList.forEach(item => {
-                    item.tagIds = item.tagIds.filter(id => id !== tagId);
-                });
-                this.save();
-            },
+        _addCatBlock() {
+            if (this.editId === 'newcat') {
+                return `<div class="add-cat-edit">
+                    <input id="ii" class="add-cat-input"
+                           placeholder="カテゴリ名..."
+                           onkeydown="EH.key(event)"
+                           onclick="event.stopPropagation()">
+                </div>`;
+            }
+            return `<div class="add-cat" onclick="UI.enter('newcat')">＋ カテゴリ追加</div>`;
+        },
 
-            save() {
-                Storage.save('shoppingList', this.shoppingList);
-                Storage.save('tags', this.tags);
-            },
-        };
+        enter(id) {
+            if (this.editId === id) return;
+            if (this.editId !== null) this._save();   // 別パネルの編集を保存してから切替
+            this.editId = id;
+            this.render();
 
-        // ========== LAYER 2: UI ==========
-        const UI = {
-            renderGrid() {
-                const container = document.getElementById('gridContainer');
-                const items = AppState.getItems();
-                const tags  = AppState.getTags();
+            if (this._outsideOff) this._outsideOff();
+            const handler = (e) => {
+                const input = document.getElementById('ii');
+                if (!input) return;
+                const wrap = input.closest('.panel-edit, .add-cat-edit, .cat-header');
+                if (wrap && wrap.contains(e.target)) return;
+                this.exit(true);
+            };
+            setTimeout(() => {
+                document.addEventListener('mousedown',  handler);
+                document.addEventListener('touchstart', handler);
+                this._outsideOff = () => {
+                    document.removeEventListener('mousedown',  handler);
+                    document.removeEventListener('touchstart', handler);
+                };
+            }, 10);
+        },
 
-                if (items.length === 0) {
-                    container.innerHTML = '<div class="empty-state">アイテムがありません</div>';
-                    return;
-                }
+        exit(save) {
+            if (this._outsideOff) { this._outsideOff(); this._outsideOff = null; }
+            if (save) this._save();
+            this.editId = null;
+            this.render();
+        },
 
-                container.innerHTML = items.map((item, index) => {
-                    const itemTags = item.tagIds
-                        .map(id => tags.find(t => t.id === id))
-                        .filter(Boolean);
+        _save() {
+            const input = document.getElementById('ii');
+            if (!input) return;
+            const val = input.value.trim();
+            if (!val) return;
+            const id = this.editId;
+            if (id === 'newcat')          AppState.addCategory(val);
+            else if (id.startsWith('new-'))  AppState.addItem(val, id.slice(4));
+            else if (id.startsWith('cat-'))  AppState.updateCatName(id.slice(4), val);
+            else if (id.startsWith('item-')) AppState.updateItemName(+id.slice(5), val);
+        },
+    };
 
-                    const tagChips = itemTags.map(t =>
-                        `<span class="tag-chip" style="background:${t.color}">${Utils.escapeHtml(t.name)}</span>`
-                    ).join('');
+    // ========== EventHandlers ==========
+    const EH = {
+        toggleCat(catId) { AppState.toggleCat(catId); UI.render(); },
+        toggle(id)       { AppState.toggleNeeded(id); UI.render(); },
+        del(id) {
+            UI.exit(false);
+            AppState.deleteItem(id);
+            UI.render();
+        },
+        key(e) {
+            if (e.key === 'Enter')  { e.preventDefault(); UI.exit(true); }
+            if (e.key === 'Escape') { UI.exit(false); }
+        },
+    };
 
-                    return `
-                        <div class="panel ${item.needed ? 'needed' : ''}"
-                             data-item-id="${item.id}"
-                             data-index="${index}"
-                             onclick="EventHandlers.onToggleNeeded(${item.id})">
-                            <button class="btn-delete"
-                                    onclick="event.stopPropagation(); EventHandlers.onDeleteItem(${item.id})">−</button>
-                            <div class="photo-frame"></div>
-                            <span class="item-name">${Utils.escapeHtml(item.name)}</span>
-                            <div class="drag-handle" onclick="event.stopPropagation()">⠿</div>
-                            <div class="panel-tags-corner">${tagChips}</div>
-                        </div>`;
-                }).join('');
-            },
+    // ========== DragSystem ==========
+    const Drag = {
+        FLIP_MS: 180,
+        s: {
+            on: false, flipping: false,
+            catBody: null, catId: null,
+            src: null, clone: null,
+            ox: 0, oy: 0, lastNext: null,
+        },
+        _mv: null, _up: null, _cx: null,
 
-            renderTagSelector() {
-                document.getElementById('tagSelector').innerHTML = AppState.getTags().map(tag => `
-                    <button type="button"
-                            class="tag-option ${AppState.selectedTagIds.includes(tag.id) ? 'selected' : ''}"
-                            onclick="EventHandlers.onToggleTagSelection('${tag.id}')">
-                        ${Utils.escapeHtml(tag.name)}
-                    </button>`).join('');
-            },
+        init() {
+            document.getElementById('app')
+                .addEventListener('touchstart', e => this._ts(e), { passive: true });
+        },
 
-            renderTagManagement() {
-                const tags = AppState.getTags();
-                document.getElementById('tagList').innerHTML = tags.length === 0
-                    ? '<p>タグがありません</p>'
-                    : tags.map(tag => `
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #ddd;">
-                            <span class="tag-chip" style="background:${tag.color};font-size:12px;padding:4px 8px;">${Utils.escapeHtml(tag.name)}</span>
-                            ${tag.id !== 'default'
-                                ? `<button style="background:#f44336;padding:6px 12px;font-size:12px;" onclick="EventHandlers.onDeleteTag('${tag.id}')">削除</button>`
-                                : ''}
-                        </div>`).join('');
-            },
+        _ts(e) {
+            if (e.touches.length > 1) return;
+            const h = e.target.closest('.drag-handle');
+            if (!h) return;
+            const panel = h.closest('.panel');
+            const body  = h.closest('.cat-body');
+            if (!panel || !body || panel.classList.contains('panel-dummy')) return;
+            if (UI.editId) return;
+            this._start(panel, body, e.touches[0]);
+        },
 
-            renderAll() { this.renderGrid(); },
-        };
+        _start(panel, body, t) {
+            const r = panel.getBoundingClientRect();
+            this.s.on = true;
+            this.s.src = panel;
+            this.s.catBody = body;
+            this.s.catId   = body.dataset.cat;
 
-        // ========== LAYER 3: EventHandlers ==========
-        const EventHandlers = {
-            onToggleNeeded(id) { AppState.toggleNeeded(id); UI.renderAll(); },
+            const clone = panel.cloneNode(true);
+            clone.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;
+                width:${r.width}px;height:${r.height}px;pointer-events:none;z-index:9999;
+                opacity:.93;transform:scale(1.03);box-shadow:0 8px 24px rgba(0,0,0,.25);`;
+            document.body.appendChild(clone);
+            panel.classList.add('drag-source');
+            this.s.clone    = clone;
+            this.s.ox       = t.clientX - r.left;
+            this.s.oy       = t.clientY - r.top;
+            this.s.lastNext = panel.nextSibling;
 
-            onDeleteItem(id) {
-                if (confirm('削除してもよろしいですか？')) { AppState.deleteItem(id); UI.renderAll(); }
-            },
+            this._mv = e => { e.preventDefault(); this._move(e.touches[0]); };
+            this._up = () => this._end();
+            this._cx = () => this._cancel();
+            document.addEventListener('touchmove',   this._mv, { passive: false });
+            document.addEventListener('touchend',    this._up);
+            document.addEventListener('touchcancel', this._cx);
+            if (navigator.vibrate) navigator.vibrate(25);
+        },
 
-            onDeleteTag(tagId) {
-                if (confirm('このタグを削除してもよろしいですか？')) {
-                    AppState.deleteTag(tagId); UI.renderTagManagement();
-                }
-            },
+        _move(t) {
+            const { clone, src, ox, oy, catBody } = this.s;
+            if (!clone) return;
+            clone.style.left = `${t.clientX - ox}px`;
+            clone.style.top  = `${t.clientY - oy}px`;
+            if (this.s.flipping) return;
 
-            onToggleTagSelection(tagId) {
-                if (AppState.selectedTagIds.includes(tagId)) {
-                    AppState.selectedTagIds = AppState.selectedTagIds.filter(id => id !== tagId);
-                } else {
-                    AppState.selectedTagIds.push(tagId);
-                }
-                UI.renderTagSelector();
-            },
+            // 指のY座標で判定（レスポンシブ）
+            const ty = t.clientY;
+            const panels = [...catBody.querySelectorAll('.panel:not(.drag-source):not(.panel-dummy)')];
+            let best = null, bestD = Infinity;
+            panels.forEach(p => {
+                const r = p.getBoundingClientRect();
+                const d = Math.abs(ty - (r.top + r.height / 2));
+                if (d < bestD) { bestD = d; best = p; }
+            });
+            if (!best) return;
 
-            submitAddItem() {
-                const name = document.getElementById('itemNameInput').value.trim();
-                if (!name) { alert('アイテム名を入力してください'); return; }
-                AppState.addItem(name, AppState.selectedTagIds);
-                this.closeAddItemModal();
-                UI.renderAll();
-            },
+            const bc  = best.getBoundingClientRect();
+            const bcy = bc.top + bc.height / 2;
+            const dummy = catBody.querySelector('.panel-dummy');
+            let next = ty < bcy ? best : best.nextSibling;
+            if (next === null) next = dummy;   // dummy が末尾を保証
 
-            submitNewTag() {
-                const name = document.getElementById('tagNameInput').value.trim();
-                if (!name) { alert('タグ名を入力してください'); return; }
-                try { AppState.createTag(name); this.closeNewTagModal(); UI.renderTagSelector(); }
-                catch (e) { alert(e.message); }
-            },
+            if (next === this.s.lastNext) return;
 
-            openAddItemModal() {
-                AppState.selectedTagIds = [];
-                UI.renderTagSelector();
-                document.getElementById('addItemModal').classList.add('active');
-            },
-            closeAddItemModal() {
-                document.getElementById('addItemModal').classList.remove('active');
-                document.getElementById('itemNameInput').value = '';
-            },
-            openNewTagModal()  { document.getElementById('newTagModal').classList.add('active'); },
-            closeNewTagModal() {
-                document.getElementById('newTagModal').classList.remove('active');
-                document.getElementById('tagNameInput').value = '';
-            },
-            openTagManagementModal() {
-                UI.renderTagManagement();
-                document.getElementById('tagManagementModal').classList.add('active');
-            },
-            closeTagManagementModal() {
-                document.getElementById('tagManagementModal').classList.remove('active');
-            },
-        };
+            const all = [...catBody.querySelectorAll('.panel:not(.panel-dummy)')];
+            all.forEach(p => p.getAnimations().forEach(a => a.finish()));
 
-        // ========== LAYER 4: DragSystem ==========
-        const DragSystem = {
-            FLIP_DURATION_MS: 200,
+            const pre = {};
+            all.forEach(p => { pre[p.dataset.id] = p.getBoundingClientRect(); });
 
-            state: {
-                isDragging:      false,
-                isFlipping:      false,
-                offsetX:         0,
-                offsetY:         0,
-                fromIndex:       -1,
-                cloneEl:         null,
-                sourceEl:        null,
-                lastNextSibling: null,
-            },
+            catBody.insertBefore(src, next);
+            this.s.lastNext = next;
+            this.s.flipping = true;
+            setTimeout(() => { this.s.flipping = false; }, this.FLIP_MS + 30);
 
-            // ドラッグ中のみ document に追加するハンドラ
-            _moveHandler:   null,
-            _endHandler:    null,
-            _cancelHandler: null,
+            all.filter(p => !p.classList.contains('drag-source')).forEach(p => {
+                const n = p.getBoundingClientRect();
+                const o = pre[p.dataset.id];
+                if (!o) return;
+                const dy = o.top - n.top;
+                if (Math.abs(dy) < 1) return;
+                p.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }],
+                    { duration: this.FLIP_MS, easing: 'cubic-bezier(.25,.46,.45,.94)' });
+            });
+        },
 
-            init() {
-                const c = document.getElementById('gridContainer');
-                c.addEventListener('touchstart', e => this._onTouchStart(e), { passive: true });
-            },
+        _end() {
+            this._off();
+            const { catBody, catId, src, clone } = this.s;
+            const panels  = [...catBody.querySelectorAll('.panel:not(.panel-dummy)')];
+            const newOrder = panels.map(p => +p.dataset.id);
+            const oldOrder = AppState.getItemsByCat(catId).map(i => i.id);
 
-            _onTouchStart(e) {
-                if (e.touches.length > 1) return;
-                const handle = e.target.closest('.drag-handle');
-                if (!handle) return;
-                const panel = handle.closest('.panel');
-                if (!panel) return;
-                this._startDrag(panel, e.touches[0]);
-            },
+            clone.remove();
+            src.classList.remove('drag-source');
 
-            _startDrag(panelEl, touch) {
-                const rect   = panelEl.getBoundingClientRect();
-                const panels = [...document.querySelectorAll('#gridContainer .panel')];
-                this.state.fromIndex = panels.indexOf(panelEl);
+            if (JSON.stringify(newOrder) !== JSON.stringify(oldOrder)) {
+                AppState.reorderInCat(catId, newOrder);
+                UI.render();
+            }
+            this._reset();
+        },
 
-                const clone = panelEl.cloneNode(true);
-                clone.style.cssText = `
-                    position: fixed;
-                    left: ${rect.left}px;
-                    top:  ${rect.top}px;
-                    width: ${rect.width}px;
-                    height: ${rect.height}px;
-                    pointer-events: none;
-                    z-index: 9999;
-                    opacity: 0.93;
-                    transform: scale(1.03);
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-                `;
-                document.body.appendChild(clone);
+        _cancel() {
+            this._off();
+            if (this.s.clone) this.s.clone.remove();
+            if (this.s.src)   this.s.src.classList.remove('drag-source');
+            this._reset();
+        },
 
-                panelEl.classList.add('drag-source');
+        _off() {
+            document.removeEventListener('touchmove',   this._mv);
+            document.removeEventListener('touchend',    this._up);
+            document.removeEventListener('touchcancel', this._cx);
+            this._mv = this._up = this._cx = null;
+        },
 
-                this.state.isDragging      = true;
-                this.state.sourceEl        = panelEl;
-                this.state.cloneEl         = clone;
-                this.state.offsetX         = touch.clientX - rect.left;
-                this.state.offsetY         = touch.clientY - rect.top;
-                this.state.lastNextSibling = panelEl.nextSibling;
+        _reset() {
+            Object.assign(this.s, {
+                on: false, flipping: false, catBody: null, catId: null,
+                src: null, clone: null, lastNext: null,
+            });
+        },
+    };
 
-                // ドラッグ中のみリスナを追加
-                this._moveHandler   = e => { e.preventDefault(); this._moveDrag(e.touches[0]); };
-                this._endHandler    = () => this._endDrag();
-                this._cancelHandler = () => this._cancel();
-                document.addEventListener('touchmove',   this._moveHandler,   { passive: false });
-                document.addEventListener('touchend',    this._endHandler);
-                document.addEventListener('touchcancel', this._cancelHandler);
+    // ========== Storage ==========
+    const Storage = {
+        save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} },
+        load(k)    { try { const d = localStorage.getItem(k); return d ? JSON.parse(d) : null; } catch(e){ return null; } },
+    };
 
-                if (navigator.vibrate) navigator.vibrate(30);
-            },
+    // ========== Utils ==========
+    function escH(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+    function esc(t)  { return String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 
-            _moveDrag(touch) {
-                const { cloneEl, offsetX, offsetY } = this.state;
-                if (!cloneEl) return;
+    // ========== Init ==========
+    const CATS = [
+        { id: 'c1', name: '常備品', collapsed: false },
+        { id: 'c2', name: '食材',   collapsed: false },
+    ];
+    const ITEMS = [
+        { id: 1, name: '塩',     categoryId: 'c1', needed: false },
+        { id: 2, name: '砂糖',   categoryId: 'c1', needed: false },
+        { id: 3, name: '醤油',   categoryId: 'c1', needed: false },
+        { id: 4, name: 'みりん', categoryId: 'c1', needed: false },
+        { id: 5, name: '油',     categoryId: 'c1', needed: false },
+        { id: 6, name: '卵',     categoryId: 'c2', needed: false },
+        { id: 7, name: '牛乳',   categoryId: 'c2', needed: false },
+    ];
 
-                cloneEl.style.left = `${touch.clientX - offsetX}px`;
-                cloneEl.style.top  = `${touch.clientY - offsetY}px`;
-
-                if (this.state.isFlipping) return;
-
-                // 1列：Y軸だけで判定
-                const cloneR  = cloneEl.getBoundingClientRect();
-                const cloneCY = cloneR.top + cloneR.height / 2;
-
-                const panels = [...document.querySelectorAll('#gridContainer .panel:not(.drag-source)')];
-                let closest = null, closestDist = Infinity;
-                panels.forEach(p => {
-                    const cy = p.getBoundingClientRect().top + p.getBoundingClientRect().height / 2;
-                    const d  = Math.abs(cloneCY - cy);
-                    if (d < closestDist) { closestDist = d; closest = p; }
-                });
-                if (!closest) return;
-
-                const closestCY    = closest.getBoundingClientRect().top + closest.getBoundingClientRect().height / 2;
-                const newNextSibling = cloneCY < closestCY ? closest : closest.nextSibling;
-
-                if (newNextSibling === this.state.lastNextSibling) return;
-
-                const container = document.getElementById('gridContainer');
-                const allPanels = [...container.querySelectorAll('.panel')];
-
-                allPanels.forEach(p => p.getAnimations().forEach(a => a.finish()));
-
-                const before = {};
-                allPanels.forEach(p => { before[p.dataset.itemId] = p.getBoundingClientRect(); });
-
-                container.insertBefore(this.state.sourceEl, newNextSibling);
-                this.state.lastNextSibling = newNextSibling;
-
-                this.state.isFlipping = true;
-                setTimeout(() => { this.state.isFlipping = false; }, this.FLIP_DURATION_MS + 30);
-
-                allPanels
-                    .filter(p => !p.classList.contains('drag-source'))
-                    .forEach(p => {
-                        const newR = p.getBoundingClientRect();
-                        const oldR = before[p.dataset.itemId];
-                        if (!oldR) return;
-                        const dy = oldR.top - newR.top;
-                        if (Math.abs(dy) < 1) return;
-                        p.animate(
-                            [{ transform: `translateY(${dy}px)` }, { transform: 'none' }],
-                            { duration: this.FLIP_DURATION_MS, easing: 'cubic-bezier(0.25,0.46,0.45,0.94)' }
-                        );
-                    });
-            },
-
-            _endDrag() {
-                this._removeDocListeners();
-
-                const container = document.getElementById('gridContainer');
-                const panels    = [...container.querySelectorAll('.panel')];
-                const newIndex  = panels.indexOf(this.state.sourceEl);
-
-                this.state.cloneEl.remove();
-                this.state.sourceEl.classList.remove('drag-source');
-
-                if (newIndex !== -1 && newIndex !== this.state.fromIndex) {
-                    AppState.reorderItems(this.state.fromIndex, newIndex);
-                    UI.renderAll();
-                }
-
-                this._resetState();
-            },
-
-            _cancel() {
-                this._removeDocListeners();
-                if (this.state.cloneEl)  this.state.cloneEl.remove();
-                if (this.state.sourceEl) this.state.sourceEl.classList.remove('drag-source');
-                this._resetState();
-            },
-
-            _removeDocListeners() {
-                if (this._moveHandler)   document.removeEventListener('touchmove',   this._moveHandler,   { passive: false });
-                if (this._endHandler)    document.removeEventListener('touchend',    this._endHandler);
-                if (this._cancelHandler) document.removeEventListener('touchcancel', this._cancelHandler);
-                this._moveHandler = this._endHandler = this._cancelHandler = null;
-            },
-
-            _resetState() {
-                Object.assign(this.state, {
-                    isDragging: false, isFlipping: false, cloneEl: null, sourceEl: null,
-                    fromIndex: -1, lastNextSibling: null,
-                });
-            },
-        };
-
-        // ========== LAYER 5: Storage ==========
-        const Storage = {
-            save(key, data) {
-                try { localStorage.setItem(key, JSON.stringify(data)); }
-                catch (e) { console.error('Storage error:', e); }
-            },
-            load(key) {
-                try {
-                    const d = localStorage.getItem(key);
-                    return d ? JSON.parse(d) : null;
-                } catch (e) { return null; }
-            },
-        };
-
-        // ========== LAYER 6: Utils ==========
-        const Utils = {
-            generateColor() {
-                const c = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A',
-                           '#98D8C8','#F7DC6F','#BB8FCE','#85C1E2'];
-                return c[Math.floor(Math.random() * c.length)];
-            },
-            escapeHtml(text) {
-                const d = document.createElement('div');
-                d.textContent = text;
-                return d.innerHTML;
-            },
-        };
-
-        // ========== Init ==========
-        const PRESET_ITEMS = [
-            { id: 1, name: '塩',     tagIds: ['default'], needed: false },
-            { id: 2, name: '砂糖',   tagIds: ['default'], needed: false },
-            { id: 3, name: '醤油',   tagIds: ['default'], needed: false },
-            { id: 4, name: 'みりん', tagIds: ['default'], needed: false },
-            { id: 5, name: '酢',     tagIds: ['default'], needed: false },
-            { id: 6, name: '油',     tagIds: ['default'], needed: false },
-            { id: 7, name: '小麦粉', tagIds: ['default'], needed: false },
-            { id: 8, name: '卵',     tagIds: ['default'], needed: false },
-        ];
-
-        function init() {
-            AppState.init(PRESET_ITEMS);
-            UI.renderAll();
-            DragSystem.init();
-        }
-
-        init();
+    AppState.init(CATS, ITEMS);
+    UI.render();
+    Drag.init();
     </script>
 </body>
 </html>
