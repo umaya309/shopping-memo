@@ -35,6 +35,18 @@
             font-size: 12px; font-weight: 700; color: #666;
             letter-spacing: 0.8px; text-transform: uppercase; flex: 1;
         }
+        .cat-toggle-all {
+            width: 32px; min-width: 32px; height: 18px;
+            background: #ccc; border-radius: 9px; border: none;
+            cursor: pointer; display: flex; align-items: center;
+            padding: 1px; transition: background .2s; flex-shrink: 0;
+        }
+        .cat-toggle-all.on { background: #4caf50; }
+        .cat-toggle-all-knob {
+            width: 14px; height: 14px; background: #fff;
+            border-radius: 50%; transition: transform .2s; pointer-events: none;
+        }
+        .cat-toggle-all.on .cat-toggle-all-knob { transform: translateX(14px); }
         .cat-name-input {
             flex: 1; border: none; border-bottom: 2px solid #007AFF;
             outline: none; font-size: 12px; font-weight: 700;
@@ -230,6 +242,12 @@
             const i = this.items.find(i => i.id === id);
             if (i) { i.needed = !i.needed; this.save(); }
         },
+        toggleAllInCat(catId) {
+            const catItems = this.items.filter(i => i.categoryId === catId);
+            const allOn = catItems.every(i => i.needed);
+            catItems.forEach(i => { i.needed = !allOn; });
+            this.save();
+        },
         deleteItem(id) {
             this.items = this.items.filter(i => i.id !== id);
             this.save();
@@ -288,11 +306,19 @@
                 ? `<button class="btn-del"
                           onclick="event.stopPropagation();EH.delCat('${cat.id}')">🗑</button>`
                 : '';
+            const allOn = catItems.length > 0 && catItems.every(i => i.needed);
+            const toggleAllBtn = !editingName
+                ? `<button class="cat-toggle-all ${allOn ? 'on' : ''}"
+                          onclick="event.stopPropagation();EH.toggleAllCat('${cat.id}')">
+                    <div class="cat-toggle-all-knob"></div>
+                  </button>`
+                : '';
 
             return `<div class="cat-section" data-cat="${cat.id}">
                 <div class="cat-header" onclick="EH.toggleCat('${cat.id}')">
                     <span class="cat-arrow">${cat.collapsed ? '▶' : '▼'}</span>
                     ${nameEl}
+                    ${toggleAllBtn}
                     ${delBtn}
                 </div>
                 ${cat.collapsed ? '' : `
@@ -400,6 +426,7 @@
 
     const EH = {
         toggleCat(catId) { AppState.toggleCat(catId); UI.render(); },
+        toggleAllCat(catId) { AppState.toggleAllInCat(catId); UI.render(); },
         toggle(id)       { AppState.toggleNeeded(id); UI.render(); },
         del(id) {
             UI.exit(false);
