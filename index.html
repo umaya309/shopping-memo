@@ -61,11 +61,8 @@
         }
 
         .cat-body {
-            position: relative;
-            padding: 4px 0 4px var(--swipe-distance); gap: 0; display: flex;
+            padding: 4px 0; gap: 0; display: flex;
             flex-direction: column;
-            overflow-x: hidden;
-            width: 100%;
         }
 
         /* ── Panel ── */
@@ -104,15 +101,11 @@
 
         /* Swipe delete button */
         .swipe-del-btn {
-            position: absolute; left: -120px; top: 0; bottom: 0;
-            width: 100px; background: #ff4444; color: #fff;
+            position: absolute; top: 0; bottom: 0;
+            background: #ff4444; color: #fff;
             border: none; font-size: 14px; font-weight: 500; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; z-index: 0; padding: 0;
-            pointer-events: auto;
-        }
-        .panel.panel-edit .swipe-del-btn {
-            display: none;
+            display: none; align-items: center; justify-content: center;
+            z-index: 0; padding: 0;
         }
 
         /* ── Photo frame ── */
@@ -491,18 +484,24 @@
                 }
             }
 
-            if (this.s.isHorizontal !== false) {
-                e.preventDefault();
-            }
-
+            if (this.s.isHorizontal !== false) e.preventDefault();
             if (this.s.isHorizontal === false) return;
-            if (this.s.isHorizontal === true && !this.s.moved) {
-                this.s.moved = true;
-            }
+            if (this.s.isHorizontal === true && !this.s.moved) this.s.moved = true;
             if (!this.s.moved) return;
 
-            this.s.offsetX = Math.max(0, Math.min(dx, 120));
+            this.s.offsetX = Math.max(0, Math.min(dx, 100));
             this.s.panel.style.transform = `translateX(${this.s.offsetX}px)`;
+
+            const btn = this.s.panel.querySelector('.swipe-del-btn');
+            if (btn) {
+                if (this.s.offsetX > 0) {
+                    btn.style.display = 'flex';
+                    btn.style.left = `-${this.s.offsetX}px`;
+                    btn.style.width = `${this.s.offsetX}px`;
+                } else {
+                    btn.style.display = 'none';
+                }
+            }
         },
 
         _end() {
@@ -513,12 +512,15 @@
                 return;
             }
 
-            if (this.s.offsetX > 60) {
+            const btn = this.s.panel.querySelector('.swipe-del-btn');
+            if (this.s.offsetX > 50) {
                 this.s.panel.style.transition = 'transform .2s';
-                this.s.panel.style.transform = 'translateX(120px)';
+                this.s.panel.style.transform = 'translateX(100px)';
+                if (btn) { btn.style.left = '-100px'; btn.style.width = '100px'; }
             } else {
                 this.s.panel.style.transition = 'transform .2s';
                 this.s.panel.style.transform = 'translateX(0)';
+                if (btn) btn.style.display = 'none';
                 setTimeout(() => {
                     if (this.s.panel) {
                         this.s.panel.style.transition = '';
