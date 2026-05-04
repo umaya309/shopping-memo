@@ -49,6 +49,7 @@
             padding: 4px 0 4px 80px; gap: 0; display: flex;
             flex-direction: column;
             margin-left: -80px;
+            overflow-x: hidden;
         }
 
         /* ── Panel ── */
@@ -211,6 +212,11 @@
             const c = this.categories.find(c => c.id === catId);
             if (c) { c.name = name; this.save(); }
         },
+        deleteCategory(catId) {
+            this.categories = this.categories.filter(c => c.id !== catId);
+            this.items = this.items.filter(i => i.categoryId !== catId);
+            this.save();
+        },
 
         addItem(name, categoryId) {
             this.items.push({ id: Date.now(), name, categoryId, needed: false });
@@ -278,11 +284,16 @@
                 : `<span class="cat-name"
                          onclick="event.stopPropagation();UI.enter('cat-${cat.id}')"
                          >${escH(cat.name)}</span>`;
+            const delBtn = editingName
+                ? `<button class="btn-del"
+                          onclick="event.stopPropagation();EH.delCat('${cat.id}')">🗑</button>`
+                : '';
 
             return `<div class="cat-section" data-cat="${cat.id}">
                 <div class="cat-header" onclick="EH.toggleCat('${cat.id}')">
                     <span class="cat-arrow">${cat.collapsed ? '▶' : '▼'}</span>
                     ${nameEl}
+                    ${delBtn}
                 </div>
                 ${cat.collapsed ? '' : `
                 <div class="cat-body" data-cat="${cat.id}">
@@ -393,6 +404,11 @@
         del(id) {
             UI.exit(false);
             AppState.deleteItem(id);
+            UI.render();
+        },
+        delCat(catId) {
+            UI.exit(false);
+            AppState.deleteCategory(catId);
             UI.render();
         },
         key(e) {
