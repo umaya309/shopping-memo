@@ -104,8 +104,8 @@
 
         /* Swipe delete button */
         .swipe-del-btn {
-            position: absolute; left: calc(-1 * var(--swipe-distance)); top: 0; bottom: 0;
-            width: var(--swipe-distance); background: #ff4444; color: #fff;
+            position: absolute; left: -120px; top: 0; bottom: 0;
+            width: 100px; background: #ff4444; color: #fff;
             border: none; font-size: 14px; font-weight: 500; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0; z-index: 0; padding: 0;
@@ -501,7 +501,7 @@
             }
             if (!this.s.moved) return;
 
-            this.s.offsetX = Math.max(0, Math.min(dx, 100));
+            this.s.offsetX = Math.max(0, Math.min(dx, 120));
             this.s.panel.style.transform = `translateX(${this.s.offsetX}px)`;
         },
 
@@ -513,9 +513,9 @@
                 return;
             }
 
-            if (this.s.offsetX > 50) {
+            if (this.s.offsetX > 60) {
                 this.s.panel.style.transition = 'transform .2s';
-                this.s.panel.style.transform = 'translateX(100px)';
+                this.s.panel.style.transform = 'translateX(120px)';
             } else {
                 this.s.panel.style.transition = 'transform .2s';
                 this.s.panel.style.transform = 'translateX(0)';
