@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -44,52 +44,61 @@
         }
 
         .cat-body {
-            background: #fafafa; border-radius: 10px;
-            padding: 8px; gap: 6px; display: flex;
-            flex-direction: column; border: 1px solid #f0f0f0;
-        }
-        @media (prefers-color-scheme: dark) {
-            .cat-body { background: #2a2a2a; border-color: #3a3a3a; }
+            padding: 4px 0; gap: 0; display: flex;
+            flex-direction: column;
         }
 
         /* ── Panel ── */
         .panel {
-            position: relative; background: #fff; border: 1px solid #e0e0e0;
-            border-radius: 8px; padding: 6px 8px;
-            display: flex; align-items: center; gap: 8px;
-            min-height: 52px; will-change: transform;
-            user-select: none; -webkit-user-select: none; touch-action: auto;
+            position: relative; background: #fff; border: none;
+            padding: 8px 8px 8px 0; display: flex; align-items: center; gap: 6px;
+            min-height: 40px; will-change: transform;
+            user-select: none; -webkit-user-select: none; touch-action: manipulation;
+            overflow: hidden; border-bottom: 1px solid #eee;
+            z-index: 2;
         }
         @media (prefers-color-scheme: dark) {
-            .panel { background: #1a1a1a; border-color: #404040; }
+            .panel { background: #1a1a1a; border-bottom-color: #333; }
         }
         .panel.needed {
-            background: #f0faf0; border-color: #b2dfdb;
-            border-left: 3px solid #4caf50;
+            background: #f0faf0;
         }
         @media (prefers-color-scheme: dark) {
-            .panel.needed { background: #1a2e1a; border-color: #4caf50; }
+            .panel.needed { background: #1a2e1a; }
         }
         .panel.drag-source { opacity: 0; pointer-events: none; }
         .panel.panel-dummy {
-            background: transparent; border: 1.5px dashed #ccc;
+            background: transparent; border: none; border-bottom: 1.5px dashed #ccc;
             justify-content: center; color: #bbb; font-size: 13px;
-            min-height: 40px; cursor: pointer;
+            min-height: 36px; cursor: pointer;
         }
         @media (prefers-color-scheme: dark) {
-            .panel.panel-dummy { border-color: #444; color: #555; }
+            .panel.panel-dummy { border-bottom-color: #444; color: #555; }
         }
         .panel.panel-edit {
-            background: #fff; border: 2px solid #007AFF; cursor: default;
+            background: #f5f5f5; border: none; border-bottom: 2px solid #007AFF; cursor: default;
         }
         @media (prefers-color-scheme: dark) {
-            .panel.panel-edit { background: #2a2a2a; border-color: #007AFF; }
+            .panel.panel-edit { background: #2a2a2a; }
+        }
+
+        /* Swipe delete button */
+        .swipe-del-btn {
+            position: absolute; right: 0; top: 0; bottom: 0;
+            width: 80px; background: #ff4444; color: #fff;
+            border: none; font-size: 18px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; z-index: 0; padding: 0;
+            pointer-events: none;
+        }
+        .panel.swipe-reveal .swipe-del-btn {
+            pointer-events: auto;
         }
 
         /* ── Photo frame ── */
         .photo {
-            width: 38px; min-width: 38px; height: 38px;
-            border-radius: 6px; border: 1px solid #ddd;
+            width: 32px; min-width: 32px; height: 32px;
+            border-radius: 4px; border: 1px solid #ddd;
             background: #ebebeb; flex-shrink: 0; overflow: hidden;
         }
         @media (prefers-color-scheme: dark) { .photo { background: #3a3a3a; border-color: #555; } }
@@ -108,22 +117,22 @@
 
         /* ── Toggle ── */
         .toggle {
-            width: 44px; min-width: 44px; height: 26px;
-            background: #ccc; border-radius: 13px; border: none;
+            width: 50px; min-width: 50px; height: 30px;
+            background: #ccc; border-radius: 15px; border: none;
             cursor: pointer; display: flex; align-items: center;
             padding: 2px; transition: background .2s; flex-shrink: 0;
         }
         .toggle.on { background: #4caf50; }
         .toggle-knob {
-            width: 22px; height: 22px; background: #fff;
+            width: 26px; height: 26px; background: #fff;
             border-radius: 50%; transition: transform .2s; pointer-events: none;
         }
-        .toggle.on .toggle-knob { transform: translateX(18px); }
+        .toggle.on .toggle-knob { transform: translateX(20px); }
 
         /* ── Drag handle ── */
         .drag-handle {
-            font-size: 20px; color: #ccc; min-width: 28px;
-            padding: 4px; text-align: center;
+            font-size: 20px; color: #ccc; min-width: 40px;
+            padding: 6px 8px; text-align: center;
             touch-action: none; flex-shrink: 0;
         }
         @media (prefers-color-scheme: dark) { .drag-handle { color: #555; } }
@@ -299,6 +308,8 @@
                     <div class="toggle-knob"></div>
                 </button>
                 <div class="drag-handle" onclick="event.stopPropagation()">⠿</div>
+                <button class="swipe-del-btn"
+                        onclick="event.stopPropagation();EH.del(${item.id})">🗑</button>
             </div>`;
         },
 
@@ -382,6 +393,68 @@
         key(e) {
             if (e.key === 'Enter')  { e.preventDefault(); UI.exit(true); }
             if (e.key === 'Escape') { UI.exit(false); }
+        },
+    };
+
+    const Swipe = {
+        s: { panel: null, startX: 0, offsetX: 0, moved: false },
+        _mv: null, _up: null,
+
+        init() {
+            document.addEventListener('touchstart', e => this._ts(e), { passive: true });
+        },
+
+        _ts(e) {
+            if (e.touches.length > 1) return;
+            const panel = e.target.closest('.panel:not(.panel-dummy):not(.panel-edit)');
+            if (!panel || UI.editId) return;
+            const h = e.target.closest('.drag-handle');
+            if (h) return;
+            this.s.panel = panel;
+            this.s.startX = e.touches[0].clientX;
+            this.s.offsetX = 0;
+            this.s.moved = false;
+
+            this._mv = e => { e.preventDefault(); this._move(e.touches[0]); };
+            this._up = () => this._end();
+            document.addEventListener('touchmove', this._mv, { passive: false });
+            document.addEventListener('touchend', this._up, { passive: true });
+        },
+
+        _move(t) {
+            const dx = t.clientX - this.s.startX;
+            if (dx > -10 && dx < 10) return;
+            this.s.moved = true;
+            this.s.offsetX = Math.max(-80, Math.min(dx, 0));
+            this.s.panel.style.transform = `translateX(${this.s.offsetX}px)`;
+        },
+
+        _end() {
+            document.removeEventListener('touchmove', this._mv);
+            document.removeEventListener('touchend', this._up);
+            if (!this.s.moved || !this.s.panel) return;
+            if (this.s.offsetX < -50) {
+                this.s.panel.style.transition = 'transform .2s';
+                this.s.panel.style.transform = 'translateX(-80px)';
+                setTimeout(() => this._deleteAfterSwipe(), 200);
+            } else {
+                this.s.panel.style.transition = 'transform .2s';
+                this.s.panel.style.transform = 'translateX(0)';
+                setTimeout(() => {
+                    this.s.panel.style.transition = '';
+                    this.s.panel.style.transform = '';
+                }, 200);
+            }
+            this.s.panel = null;
+            this.s.offsetX = 0;
+            this.s.moved = false;
+        },
+
+        _deleteAfterSwipe() {
+            if (!this.s.panel) return;
+            const id = +this.s.panel.dataset.id;
+            EH.del(id);
+            this.s.panel = null;
         },
     };
 
@@ -572,6 +645,7 @@
 
     AppState.init(CATS, ITEMS);
     UI.render();
+    Swipe.init();
     Drag.init();
     </script>
 </body>
