@@ -58,9 +58,9 @@
         }
 
         .cat-body {
-            padding: 4px 0 4px 80px; gap: 0; display: flex;
+            padding: 4px 0 4px 85px; gap: 0; display: flex;
             flex-direction: column;
-            margin-left: -80px;
+            margin-left: -85px;
             overflow-x: hidden;
         }
 
@@ -100,11 +100,11 @@
 
         /* Swipe delete button */
         .swipe-del-btn {
-            position: absolute; left: -80px; top: 0; bottom: 0;
+            position: absolute; left: -85px; top: 0; bottom: 0;
             width: 80px; background: #ff4444; color: #fff;
             border: none; font-size: 14px; font-weight: 500; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; z-index: 0; padding: 0;
+            flex-shrink: 0; z-index: 0; padding: 0 2px;
             pointer-events: auto;
         }
         .panel.panel-edit .swipe-del-btn {
@@ -304,7 +304,7 @@
                          >${escH(cat.name)}</span>`;
             const delBtn = editingName
                 ? `<button class="btn-del"
-                          onclick="event.stopPropagation();EH.delCat('${cat.id}')">🗑</button>`
+                          onclick="event.stopPropagation();EH.delCat('${cat.id}')">削除</button>`
                 : '';
             const allOn = catItems.length > 0 && catItems.every(i => i.needed);
             const toggleAllBtn = !editingName
