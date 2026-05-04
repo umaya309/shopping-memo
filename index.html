@@ -9,6 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>買い物メモ</title>
     <style>
+        :root {
+            --swipe-distance: 100px;
+        }
         * { box-sizing: border-box; }
         html { overflow-x: hidden; }
         body {
@@ -58,9 +61,9 @@
         }
 
         .cat-body {
-            padding: 4px 0 4px 85px; gap: 0; display: flex;
+            padding: 4px 0 4px var(--swipe-distance); gap: 0; display: flex;
             flex-direction: column;
-            margin-left: -85px;
+            margin-left: calc(-1 * var(--swipe-distance));
             overflow-x: hidden;
         }
 
@@ -100,11 +103,11 @@
 
         /* Swipe delete button */
         .swipe-del-btn {
-            position: absolute; left: -85px; top: 0; bottom: 0;
-            width: 80px; background: #ff4444; color: #fff;
+            position: absolute; left: calc(-1 * var(--swipe-distance)); top: 0; bottom: 0;
+            width: var(--swipe-distance); background: #ff4444; color: #fff;
             border: none; font-size: 14px; font-weight: 500; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; z-index: 0; padding: 0 2px;
+            flex-shrink: 0; z-index: 0; padding: 0;
             pointer-events: auto;
         }
         .panel.panel-edit .swipe-del-btn {
@@ -157,13 +160,14 @@
 
         /* ── Delete button (edit mode only) ── */
         .btn-del {
-            width: 32px; height: 32px; border-radius: 8px;
-            background: #ffebee; color: #e53935; border: none;
-            font-size: 17px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
+            border-radius: 6px; background: transparent; color: #e53935;
+            border: 1.5px solid #e53935; font-size: 13px; font-weight: 500;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            padding: 6px 12px; flex-shrink: 0;
         }
-        @media (prefers-color-scheme: dark) { .btn-del { background: #3a1515; color: #ef9a9a; } }
+        @media (prefers-color-scheme: dark) {
+            .btn-del { color: #ff6b6b; border-color: #ff6b6b; }
+        }
 
         /* ── Add category dummy ── */
         .add-cat {
@@ -496,7 +500,7 @@
             }
             if (!this.s.moved) return;
 
-            this.s.offsetX = Math.max(0, Math.min(dx, 80));
+            this.s.offsetX = Math.max(0, Math.min(dx, 100));
             this.s.panel.style.transform = `translateX(${this.s.offsetX}px)`;
         },
 
@@ -510,7 +514,7 @@
 
             if (this.s.offsetX > 50) {
                 this.s.panel.style.transition = 'transform .2s';
-                this.s.panel.style.transform = 'translateX(80px)';
+                this.s.panel.style.transform = 'translateX(100px)';
             } else {
                 this.s.panel.style.transition = 'transform .2s';
                 this.s.panel.style.transform = 'translateX(0)';
